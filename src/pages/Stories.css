@@ -1,0 +1,122 @@
+.stories-page {
+  display: flex;
+  flex: 1;
+  background: linear-gradient(135deg, #000000 0%, #0a0a0a 100%);
+  transition: all 0.3s ease;
+}
+
+.stories-content {
+  flex: 1;
+  padding: 40px 60px;
+  max-width: 850px;
+  /* Increased from 680px to 850px */
+  margin: 0 auto;
+  transition: all 0.3s ease;
+}
+
+.stories-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 24px;
+}
+
+.new-story-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: rgba(0, 255, 0, 0.1);
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  color: #00ff00;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.new-story-button:hover {
+  background: rgba(0, 255, 0, 0.2);
+  border-color: rgba(0, 255, 0, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 255, 0, 0.2);
+}
+
+.new-story-button span:first-child {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.stories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.story-card {
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.story-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(0, 255, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 255, 0, 0.1);
+}
+
+.story-header {
+  margin-bottom: 16px;
+}
+
+.story-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.story-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  flex: 1;
+}
+
+.story-badge {
+  flex-shrink: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .stories-content {
+    padding: 40px 20px;
+  }
+
+  .stories-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-buttons {
+    margin-bottom: 16px;
+  }
+
+  .story-info {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* Wider screens */
+@media (min-width: 1200px) {
+  .stories-content {
+    max-width: 950px;
+    /* Even wider on larger screens */
+  }
+}

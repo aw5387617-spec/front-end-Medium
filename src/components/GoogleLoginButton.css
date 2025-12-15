@@ -1,0 +1,15 @@
+.google-login-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.google-login-container #google-signin-button {
+    width: 100%;
+    max-width: 400px;
+}
+
+.google-login-container .g_id_signin {
+    width: 100% !important;
+    max-width: 400px !important;
+}
