@@ -65,3 +65,12 @@ export const createReply = async (parentCommentId, replyData) => {
         throw new Error(handleApiError(error, 'Failed to create reply'));
     }
 };
+
+export const updateComment = async (commentId, content) => {
+    try {
+        const response = await apiClient.put(`/comments/${commentId}`, { content });
+        return response.data;
+    } catch (error) {
+        throw new Error(handleApiError(error, 'Failed to update comment'));
+    }
+};

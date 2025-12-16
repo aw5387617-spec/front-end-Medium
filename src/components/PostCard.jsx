@@ -57,7 +57,6 @@ function PostCard({ post }) {
             </p>
           </div>
         </div>
-        <button className="more-options">•••</button>
       </div>
 
       <div
@@ -87,11 +86,9 @@ function PostCard({ post }) {
 
       <div className="post-stats">
         <div className="stat-item">
-          <span className="stat-icon">👁️</span>
           <span className="stat-text">{post.views_count?.toLocaleString() || 0} views</span>
         </div>
         <div className="stat-item">
-          <span className="stat-icon">💬</span>
           <span className="stat-text">{post.comments_count || 0} comments</span>
         </div>
       </div>
@@ -102,7 +99,6 @@ function PostCard({ post }) {
           onClick={() => navigate(`/article/${post.id}`)}
           title="Read full post"
         >
-          <span className="action-icon">📖</span>
           <span className="action-text">Read</span>
         </button>
       </div>

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useSidebar } from '../contexts/SidebarContext'
 import { useAuth } from '../contexts/AuthContext'
 import { getPostById } from '../api/postService'
-import { getCommentsByPostId, createComment, deleteComment, createReply } from '../api/commentService'
+import { getCommentsByPostId, createComment, deleteComment, createReply, updateComment } from '../api/commentService'
 import './ArticleDetail.css'
 import '../styles/CommonStyles.css'
 
@@ -18,6 +18,8 @@ function ArticleDetail() {
     const [replyContent, setReplyContent] = useState({})
     const [replyingTo, setReplyingTo] = useState(null)
     const [expandedReplies, setExpandedReplies] = useState({})
+    const [editingCommentId, setEditingCommentId] = useState(null)
+    const [editingContent, setEditingContent] = useState({})
     const fetchedRef = useRef(false)
 
     const { isLeftSidebarOpen, areBothSidebarsClosed } = useSidebar()
@@ -176,6 +178,46 @@ function ArticleDetail() {
         }
     }
 
+    const handleUpdateComment = async (commentId, content) => {
+        if (!content?.trim()) return
+
+        try {
+            const response = await updateComment(commentId, content)
+            const updatedComment = response.data || response
+
+            setComments(prev => {
+                const updateCommentInList = (commentsList) => {
+                    return commentsList.map(comment => {
+                        if (comment.id === commentId) {
+                            return { ...comment, content: updatedComment.content || content }
+                        }
+
+                        if (comment.replies && comment.replies.length > 0) {
+                            return {
+                                ...comment,
+                                replies: updateCommentInList(comment.replies)
+                            }
+                        }
+
+                        return comment
+                    })
+                }
+
+                return updateCommentInList(prev)
+            })
+
+            setEditingCommentId(null)
+            setEditingContent(prev => {
+                const newContent = { ...prev }
+                delete newContent[commentId]
+                return newContent
+            })
+        } catch (err) {
+            console.error('Error updating comment:', err)
+            alert('Failed to update comment: ' + (err.message || 'Unknown error'))
+        }
+    }
+
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -199,34 +241,87 @@ function ArticleDetail() {
                                 <div className="comment-author">{reply.author_name || reply.author?.name || 'Unknown User'}</div>
                                 <div className="comment-date">{formatDate(reply.created_at)}</div>
                             </div>
-                            {user && (user.id === reply.author?.id) && (
-                                <button
-                                    className="comment-action delete"
-                                    onClick={() => handleDeleteComment(reply.id)}
-                                    title="Delete reply"
-                                >
-                                    🗑️
-                                </button>
-                            )}
+
                         </div>
                         <div className="comment-content">
-                            {reply.content}
+                            {editingCommentId === reply.id ? (
+                                <textarea
+                                    className="comment-textarea"
+                                    value={editingContent[reply.id] || ''}
+                                    onChange={(e) => setEditingContent(prev => ({
+                                        ...prev,
+                                        [reply.id]: e.target.value
+                                    }))}
+                                    rows={4}
+                                />
+                            ) : (
+                                reply.content
+                            )}
                         </div>
 
-                        <div className="comment-actions">
-                            <button
-                                className="comment-action"
-                                onClick={() => {
-                                    setReplyingTo(replyingTo === reply.id ? null : reply.id)
-                                    setReplyContent(prev => ({
-                                        ...prev,
-                                        [reply.id]: ''
-                                    }))
-                                }}
-                            >
-                                💬 Reply
-                            </button>
-                        </div>
+                        {editingCommentId === reply.id ? (
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                                <button
+                                    className="common-button"
+                                    onClick={() => {
+                                        setEditingCommentId(null);
+                                        setEditingContent(prev => {
+                                            const newContent = { ...prev };
+                                            delete newContent[reply.id];
+                                            return newContent;
+                                        });
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="submit-comment-btn common-button primary"
+                                    onClick={() => handleUpdateComment(reply.id, editingContent[reply.id])}
+                                    disabled={!(editingContent[reply.id] || '').trim()}
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="comment-actions">
+                                {user && isCommentAuthor(user, reply) && (
+                                    <div className="comment-actions-container">
+                                        <button
+                                            className="comment-action"
+                                            onClick={() => {
+                                                setEditingCommentId(editingCommentId === reply.id ? null : reply.id);
+                                                setEditingContent(prev => ({
+                                                    ...prev,
+                                                    [reply.id]: reply.content
+                                                }));
+                                            }}
+                                            title="Edit reply"
+                                        >
+                                            <span>Edit</span>
+                                        </button>
+                                        <button
+                                            className="comment-action delete"
+                                            onClick={() => handleDeleteComment(reply.id)}
+                                            title="Delete reply"
+                                        >
+                                            <span>Delete</span>
+                                        </button>
+                                    </div>
+                                )}
+                                <button
+                                    className="comment-action"
+                                    onClick={() => {
+                                        setReplyingTo(replyingTo === reply.id ? null : reply.id)
+                                        setReplyContent(prev => ({
+                                            ...prev,
+                                            [reply.id]: ''
+                                        }))
+                                    }}
+                                >
+                                    <span>💬</span> Reply
+                                </button>
+                            </div>
+                        )}
 
                         {replyingTo === reply.id && (
                             <div className="reply-form">
@@ -400,42 +495,95 @@ function ArticleDetail() {
                                         <div className="comment-author">{comment.author_name || comment.author?.name || 'Unknown User'}</div>
                                         <div className="comment-date">{formatDate(comment.created_at)}</div>
                                     </div>
-                                    {user && (user.id === comment.author?.id) && (
-                                        <button
-                                            className="comment-action delete"
-                                            onClick={() => handleDeleteComment(comment.id)}
-                                            title="Delete comment"
-                                        >
-                                            🗑️
-                                        </button>
-                                    )}
+
                                 </div>
                                 <div className="comment-content">
-                                    {comment.content}
-                                </div>
-
-                                <div className="comment-actions">
-                                    <button
-                                        className="comment-action"
-                                        onClick={() => {
-                                            setReplyingTo(replyingTo === comment.id ? null : comment.id)
-                                            setReplyContent(prev => ({
+                                    {editingCommentId === comment.id ? (
+                                        <textarea
+                                            className="comment-textarea"
+                                            value={editingContent[comment.id] || ''}
+                                            onChange={(e) => setEditingContent(prev => ({
                                                 ...prev,
-                                                [comment.id]: ''
-                                            }))
-                                        }}
-                                    >
-                                        💬 Reply
-                                    </button>
-                                    {comment.replies && comment.replies.length > 0 && (
-                                        <button
-                                            className="comment-action"
-                                            onClick={() => toggleReplies(comment.id)}
-                                        >
-                                            {expandedReplies[comment.id] ? 'Hide Replies' : `View Replies (${comment.replies.length})`}
-                                        </button>
+                                                [comment.id]: e.target.value
+                                            }))}
+                                            rows={4}
+                                        />
+                                    ) : (
+                                        comment.content
                                     )}
                                 </div>
+
+                                {editingCommentId === comment.id ? (
+                                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                                        <button
+                                            className="common-button"
+                                            onClick={() => {
+                                                setEditingCommentId(null);
+                                                setEditingContent(prev => {
+                                                    const newContent = { ...prev };
+                                                    delete newContent[comment.id];
+                                                    return newContent;
+                                                });
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            className="submit-comment-btn common-button primary"
+                                            onClick={() => handleUpdateComment(comment.id, editingContent[comment.id])}
+                                            disabled={!(editingContent[comment.id] || '').trim()}
+                                        >
+                                            Save Changes
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="comment-actions">
+                                        {user && isCommentAuthor(user, comment) && (
+                                            <div className="comment-actions-container">
+                                                <button
+                                                    className="comment-action"
+                                                    onClick={() => {
+                                                        setEditingCommentId(editingCommentId === comment.id ? null : comment.id);
+                                                        setEditingContent(prev => ({
+                                                            ...prev,
+                                                            [comment.id]: comment.content
+                                                        }));
+                                                    }}
+                                                    title="Edit comment"
+                                                >
+                                                    <span>Edit</span>
+                                                </button>
+                                                <button
+                                                    className="comment-action delete"
+                                                    onClick={() => handleDeleteComment(comment.id)}
+                                                    title="Delete comment"
+                                                >
+                                                    <span>Delete</span>
+                                                </button>
+                                            </div>
+                                        )}
+                                        <button
+                                            className="comment-action"
+                                            onClick={() => {
+                                                setReplyingTo(replyingTo === comment.id ? null : comment.id)
+                                                setReplyContent(prev => ({
+                                                    ...prev,
+                                                    [comment.id]: ''
+                                                }))
+                                            }}
+                                        >
+                                            <span>💬</span> Reply
+                                        </button>
+                                        {comment.replies && comment.replies.length > 0 && (
+                                            <button
+                                                className="comment-action"
+                                                onClick={() => toggleReplies(comment.id)}
+                                            >
+                                                {expandedReplies[comment.id] ? 'Hide Replies' : `View Replies (${comment.replies.length})`}
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
 
                                 {replyingTo === comment.id && (
                                     <div className="reply-form">
@@ -493,4 +641,24 @@ function ArticleDetail() {
         </div>
     )
 }
+
+// Helper function to check if user is the author of a comment
+const isCommentAuthor = (user, comment) => {
+    if (!user || !comment) return false;
+
+    // Get user ID (could be number or string)
+    const userId = String(user.id);
+
+    // Try multiple possible property names for author ID
+    const authorId = String(
+        comment.author?.id ||
+        comment.author_id ||
+        comment.authorId ||
+        comment.user_id ||
+        ''
+    );
+
+    return userId === authorId && userId !== '';
+};
+
 export default ArticleDetail
