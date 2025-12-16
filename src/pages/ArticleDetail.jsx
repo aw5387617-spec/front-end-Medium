@@ -434,7 +434,7 @@ function ArticleDetail() {
                             className="back-to-feed-btn"
                             onClick={() => navigate(-1)}
                         >
-                            ← Back to Feed
+                            Back to Feed
                         </button>
                     </div>
 
