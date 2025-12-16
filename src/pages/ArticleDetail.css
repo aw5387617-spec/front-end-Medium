@@ -142,15 +142,6 @@
 .comment-actions {
     display: flex;
     gap: 16px;
-    align-items: center;
-    margin-top: 12px;
-    flex-wrap: wrap;
-}
-
-.comment-actions-container {
-    display: flex;
-    gap: 8px;
-    align-items: center;
 }
 
 .article-content {
@@ -279,12 +270,6 @@
 
 .comment-info {
     flex: 1;
-}
-
-.comment-actions-container {
-    display: flex;
-    gap: 8px;
-    align-items: center;
 }
 
 .comment-action {
